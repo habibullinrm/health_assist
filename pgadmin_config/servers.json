@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Health Assist PostgreSQL",
+      "Group": "Servers",
+      "Host": "pgsql",
+      "Port": 5432,
+      "MaintenanceDB": "main_db",
+      "Username": "root",
+      "SSLMode": "prefer",
+      "PassFile": "/var/lib/pgadmin/storage/admin_health-assist.com/pgpass"
+    }
+  }
+}

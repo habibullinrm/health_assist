@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: health_assist_api
+    working_dir: /app
+    volumes:
+      - ./api:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    command: sh -c "pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    depends_on:
+      - pgsql
+    networks:
+      - health_assist_network
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: health_assist_bot
+    working_dir: /app
+    volumes:
+      - ./bot:/app
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: sh -c "pip install -r requirements.txt && python main.py"
+    depends_on:
+      - api
+    networks:
+      - health_assist_network
+    restart: unless-stopped
+
+  sber_mock:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: health_assist_sber_mock
+    working_dir: /app
+    volumes:
+      - ./sber_mock:/app
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env
+    command: sh -c "pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8002 --reload"
+    networks:
+      - health_assist_network
+    restart: unless-stopped
+
+  pgsql:
+    image: postgres:15-alpine
+    container_name: health_assist_pgsql
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - health_assist_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: health_assist_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@health-assist.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin_config/servers.json:/pgadmin4/servers.json:ro
+      - ./pgadmin_config/pgpass:/pgadmin4/pgpass:ro
+      - ./pgadmin_config/init.sh:/init.sh:ro
+    ports:
+      - "5050:80"
+    depends_on:
+      pgsql:
+        condition: service_healthy
+    networks:
+      - health_assist_network
+    restart: unless-stopped
+    entrypoint: /init.sh
+
+networks:
+  health_assist_network:
+    driver: bridge
+    name: health_assist_network
+
+volumes:
+  postgres_data:
+    name: health_assist_postgres_data
+  pgadmin_data:
+    name: health_assist_pgadmin_data
