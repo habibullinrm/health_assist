@@ -2,3 +2,25 @@
 .idea
 .venv
 .claude
+
+# Environment variables (содержат секреты)
+.env
+main-app/.env
+bot/.env
+sber_mock/.env
+
+# НЕ игнорируем .env.example файлы - они нужны для документации
+!.env.example
+!main-app/.env.example
+!bot/.env.example
+!sber_mock/.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+
+# Logs
+logs/
+*.log

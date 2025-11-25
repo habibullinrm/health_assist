@@ -5,40 +5,46 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Настройки приложения из переменных окружения"""
+    """
+    Настройки приложения из переменных окружения.
 
-    # Основные настройки
-    APP_NAME: str = "Health Assist API"
-    APP_VERSION: str = "1.0.0"
-    APP_ENV: str = "local"
-    APP_DEBUG: bool = True
+    Docker Compose передаёт переменные из обоих .env файлов:
+    - Корневой .env (общие переменные для всех сервисов)
+    - main-app/.env (API-специфичные переменные)
+    """
 
-    # База данных
-    DB_CONNECTION: str = "pgsql"
-    DB_HOST: str = "pgsql"
-    DB_PORT: int = 5432
-    DB_DATABASE: str = "main_db"
-    DB_USERNAME: str = "root"
-    DB_PASSWORD: str = "password"
+    # Основные настройки (из main-app/.env)
+    APP_NAME: str
+    APP_VERSION: str
+    APP_ENV: str
+    APP_DEBUG: bool
 
-    # GigaChat
-    GC_CLIENT_ID: str = ""
-    GC_SCOPE: str = "GIGACHAT_API_CORP"
-    GC_AUTH_KEY: str = ""
-    GC_CLIENT_SECRET: str = ""
-    GIGACHAT_API_KEY: str = ""
-    GIGACHAT_BASE_URL: str = "http://sber_mock:8002"
+    # База данных (из корневого .env)
+    DB_CONNECTION: str
+    DB_HOST: str
+    DB_PORT: int
+    DB_DATABASE: str
+    DB_USERNAME: str
+    DB_PASSWORD: str
 
-    # Yandex OAuth
-    YANDEX_CLIENT_ID: str = ""
-    YANDEX_CLIENT_SECRET: str = ""
-    YANDEX_REDIRECT_URI: str = "http://localhost:8000/auth/yandex/callback"
+    # GigaChat (из main-app/.env)
+    GC_CLIENT_ID: str
+    GC_SCOPE: str
+    GC_AUTH_KEY: str
+    GC_CLIENT_SECRET: str
+    GIGACHAT_BASE_URL: str
 
-    # Telegram Bot
-    BOT_USERNAME: str = "ha_tl_cu_bot"
+    # Yandex OAuth (из main-app/.env)
+    YANDEX_CLIENT_ID: str
+    YANDEX_CLIENT_SECRET: str
+    YANDEX_REDIRECT_URI: str
 
-    # API
-    API_URL: str = "http://localhost:8000"
+    # Telegram Bot (из main-app/.env)
+    BOT_USERNAME: str
+
+    # API URLs (из корневого .env)
+    API_URL: str
+    WEB_URL: str = ""
 
     @property
     def DATABASE_URL(self) -> str:
@@ -51,9 +57,10 @@ class Settings(BaseSettings):
         return f"postgresql+psycopg2://{self.DB_USERNAME}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_DATABASE}"
 
     class Config:
-        env_file = ".env"
+        # Docker Compose передаёт переменные в окружение контейнера
+        # Не нужно явно указывать env_file
         case_sensitive = True
-        extra = "ignore"  # Игнорировать дополнительные поля из .env
+        extra = "ignore"
 
 
 # Глобальный экземпляр настроек
