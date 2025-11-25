@@ -80,19 +80,21 @@ def is_authorized(context: ContextTypes.DEFAULT_TYPE) -> bool:
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработчик команды /start"""
     user = update.effective_user
-    
-    # Автоматически проверяем авторизацию при старте
+
+    # Проверяем наличие параметра start (например, auth_success)
+    start_param = context.args[0] if context.args else None
+
+    # Проверяем авторизацию через API при каждом старте
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(f"{API_URL}/api/v1/auth/check/{user.id}")
             if response.status_code == 200:
                 data = response.json()
                 # Пользователь авторизован
-                was_authorized = context.user_data.get('authorized', False)
                 context.user_data['authorized'] = True
-                
-                if not was_authorized:
-                    # Пользователь только что авторизовался
+
+                # Если пришли после OAuth авторизации (параметр auth_success)
+                if start_param == "auth_success":
                     auth_message = (
                         f"✅ Вы успешно авторизованы!\n\n"
                         f"Пользователь: {data.get('user')}\n"
@@ -100,10 +102,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                         "Теперь вам доступны все функции ассистента."
                     )
                     await update.message.reply_text(auth_message, reply_markup=get_main_keyboard())
-                    logger.info(f"User {user.id} newly authorized")
+                    logger.info(f"User {user.id} returned after OAuth authorization")
                     return
+
+                # Обычный старт для уже авторизованного пользователя
+                welcome_message = (
+                    f"Здравствуйте, {user.first_name}! 👋\n\n"
+                    f"Добро пожаловать в {BOT_NAME}.\n\n"
+                    "Выберите действие из меню:"
+                )
+                await update.message.reply_text(welcome_message, reply_markup=get_main_keyboard())
+                logger.info(f"User {user.id} ({user.first_name}) started the bot (authorized)")
+                return
             else:
-                # Пользователь не найден или не авторизован - сбрасываем флаг
+                # Пользователь не найден или не авторизован
                 context.user_data['authorized'] = False
                 logger.info(f"User {user.id} not authorized, status code: {response.status_code}")
         except Exception as e:
@@ -111,24 +123,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             context.user_data['authorized'] = False
             logger.error(f"Error checking auth on start: {e}")
 
-    if is_authorized(context):
-        welcome_message = (
-            f"Здравствуйте, {user.first_name}! 👋\n\n"
-            f"Добро пожаловать в {BOT_NAME}.\n\n"
-            "Выберите действие из меню:"
-        )
-        keyboard = get_main_keyboard()
-    else:
-        context.user_data['authorized'] = False
-        welcome_message = (
-            f"Здравствуйте, {user.first_name}! 👋\n\n"
-            f"Добро пожаловать в {BOT_NAME}.\n\n"
-            "Для начала работы необходимо авторизоваться."
-        )
-        keyboard = get_unauthorized_keyboard()
-
-    await update.message.reply_text(welcome_message, reply_markup=keyboard)
-    logger.info(f"User {user.id} ({user.first_name}) started the bot")
+    # Пользователь не авторизован
+    welcome_message = (
+        f"Здравствуйте, {user.first_name}! 👋\n\n"
+        f"Добро пожаловать в {BOT_NAME}.\n\n"
+        "Для начала работы необходимо авторизоваться."
+    )
+    await update.message.reply_text(welcome_message, reply_markup=get_unauthorized_keyboard())
+    logger.info(f"User {user.id} ({user.first_name}) started the bot (not authorized)")
 
 
 async def handle_auth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -170,7 +172,6 @@ async def handle_auth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     message_text = (
         "Для работы с ассистентом необходима авторизация.\n\n"
         "Пожалуйста, войдите через Яндекс ID.\n"
-        "После авторизации откройте бота снова командой /start"
     )
     
     if update.callback_query:

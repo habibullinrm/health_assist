@@ -1,14 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import httpx
+from pathlib import Path
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User, Role
 
 router = APIRouter()
+
+# Настройка Jinja2 шаблонов
+templates_dir = Path(__file__).parent.parent.parent / "templates"
+templates = Jinja2Templates(directory=str(templates_dir))
 
 
 @router.get("/auth/login")
@@ -39,6 +45,7 @@ async def login_via_yandex(telegram_id: str):
 
 @router.get("/auth/yandex/callback")
 async def yandex_callback(
+    request: Request,
     code: str,
     state: str,  # This is the telegram_id we passed
     db: AsyncSession = Depends(get_db)
@@ -46,6 +53,7 @@ async def yandex_callback(
     """
     Handles callback from Yandex.
     Exchanges code for token, gets user info, creates/updates user.
+    Returns HTML page with auto-redirect to Telegram bot.
     """
     async with httpx.AsyncClient() as client:
         # 1. Exchange code for token
@@ -119,22 +127,31 @@ async def yandex_callback(
             user.sex = sex
         if age is not None:
             user.age = age
-            
+
         await db.commit()
         await db.refresh(user)
-        return {"message": "Successfully authorized and linked Yandex account", "user": user.full_name}
+
+        # Return HTML template with redirect to Telegram bot
+        return templates.TemplateResponse(
+            "auth_success.html",
+            {
+                "request": request,
+                "user_name": user.full_name,
+                "bot_username": settings.BOT_USERNAME
+            }
+        )
     else:
-        # Create new user? 
+        # Create new user?
         # Usually the flow starts from Telegram, so the user might not exist yet if they haven't started the bot?
         # But if they clicked the link in the bot, they must have started the bot.
         # However, we might not have saved them in DB yet if we only save on specific actions.
         # Let's assume we create a new user if not found, or error out.
         # For now, let's create/update.
-        
+
         # We need a role. Let's assume role_id=1 is "user" or "patient".
         # We should probably check if role exists or handle it safely.
         # For simplicity, let's assume role_id=1 exists.
-        
+
         new_user = User(
             external_id=telegram_id,
             yandex_id=yandex_id,
@@ -154,7 +171,15 @@ async def yandex_callback(
             # If error (e.g. role not found), log it
             raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-        return {"message": "Successfully registered and authorized via Yandex", "user": new_user.full_name}
+        # Return HTML template with redirect to Telegram bot
+        return templates.TemplateResponse(
+            "auth_success.html",
+            {
+                "request": request,
+                "user_name": new_user.full_name,
+                "bot_username": settings.BOT_USERNAME
+            }
+        )
 
 
 @router.get("/auth/check/{telegram_id}")

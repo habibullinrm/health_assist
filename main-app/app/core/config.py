@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     YANDEX_CLIENT_SECRET: str = ""
     YANDEX_REDIRECT_URI: str = "http://localhost:8000/auth/yandex/callback"
 
+    # Telegram Bot
+    BOT_USERNAME: str = "ha_tl_cu_bot"
+
     # API
     API_URL: str = "http://localhost:8000"
 
