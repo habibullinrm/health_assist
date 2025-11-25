@@ -4,6 +4,7 @@ Telegram бот для Health Assist с кнопочным интерфейсо�
 """
 import os
 import logging
+import httpx
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
@@ -11,12 +12,18 @@ from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQu
 # Загружаем переменные окружения
 load_dotenv()
 
-# Настройка логирования
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+import sys
+# from logging.handlers import RotatingFileHandler # Removed as it is in logger.py now
+
+# ... imports ...
+from logger import setup_logging
+
+# Загружаем переменные окружения
+load_dotenv()
+
+logger = setup_logging()
+API_URL = os.getenv('API_URL', 'http://api:8000')
+WEB_URL = os.getenv('WEB_URL', 'http://127.0.0.1:8000')
 
 # Получаем токен из переменных окружения
 TG_TOKEN = os.getenv('TG_TOKEN')
@@ -73,6 +80,36 @@ def is_authorized(context: ContextTypes.DEFAULT_TYPE) -> bool:
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработчик команды /start"""
     user = update.effective_user
+    
+    # Автоматически проверяем авторизацию при старте
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{API_URL}/api/v1/auth/check/{user.id}")
+            if response.status_code == 200:
+                data = response.json()
+                # Пользователь авторизован
+                was_authorized = context.user_data.get('authorized', False)
+                context.user_data['authorized'] = True
+                
+                if not was_authorized:
+                    # Пользователь только что авторизовался
+                    auth_message = (
+                        f"✅ Вы успешно авторизованы!\n\n"
+                        f"Пользователь: {data.get('user')}\n"
+                        f"ID: {user.id}\n\n"
+                        "Теперь вам доступны все функции ассистента."
+                    )
+                    await update.message.reply_text(auth_message, reply_markup=get_main_keyboard())
+                    logger.info(f"User {user.id} newly authorized")
+                    return
+            else:
+                # Пользователь не найден или не авторизован - сбрасываем флаг
+                context.user_data['authorized'] = False
+                logger.info(f"User {user.id} not authorized, status code: {response.status_code}")
+        except Exception as e:
+            # При ошибке также сбрасываем флаг авторизации
+            context.user_data['authorized'] = False
+            logger.error(f"Error checking auth on start: {e}")
 
     if is_authorized(context):
         welcome_message = (
@@ -82,6 +119,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
         keyboard = get_main_keyboard()
     else:
+        context.user_data['authorized'] = False
         welcome_message = (
             f"Здравствуйте, {user.first_name}! 👋\n\n"
             f"Добро пожаловать в {BOT_NAME}.\n\n"
@@ -96,20 +134,58 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def handle_auth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработчик авторизации"""
     user = update.effective_user
+    
+    # Check auth status in backend
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{API_URL}/api/v1/auth/check/{user.id}")
+            if response.status_code == 200:
+                data = response.json()
+                # User is authorized
+                context.user_data['authorized'] = True
+                
+                auth_message = (
+                    f"✅ Вы успешно авторизованы!\n\n"
+                    f"Пользователь: {data.get('user')}\n"
+                    f"ID: {user.id}\n\n"
+                    "Теперь вам доступны все функции ассистента."
+                )
+                keyboard = get_main_keyboard()
+                if update.callback_query:
+                    await update.callback_query.message.reply_text(auth_message, reply_markup=keyboard)
+                else:
+                    await update.message.reply_text(auth_message, reply_markup=keyboard)
+                logger.info(f"User {user.id} authorized via backend check")
+                return
+        except Exception as e:
+            logger.error(f"Error checking auth: {e}")
 
-    # Устанавливаем флаг авторизации
-    context.user_data['authorized'] = True
-
-    auth_message = (
-        f"✅ Вы успешно авторизованы!\n\n"
-        f"Пользователь: {user.first_name}\n"
-        f"ID: {user.id}\n\n"
-        "Теперь вам доступны все функции ассистента."
+    # Not authorized or error -> Send link
+    auth_url = f"{WEB_URL}/api/v1/auth/login?telegram_id={user.id}"
+    
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔐 Войти через Яндекс ID", url=auth_url)]
+    ])
+    
+    message_text = (
+        "Для работы с ассистентом необходима авторизация.\n\n"
+        "Пожалуйста, войдите через Яндекс ID.\n"
+        "После авторизации откройте бота снова командой /start"
     )
-
-    keyboard = get_main_keyboard()
-    await update.message.reply_text(auth_message, reply_markup=keyboard)
-    logger.info(f"User {user.id} ({user.first_name}) authorized")
+    
+    if update.callback_query:
+        try:
+            await update.callback_query.edit_message_text(message_text, reply_markup=keyboard)
+        except Exception as e:
+            # Ignore "Message is not modified" error
+            if "Message is not modified" in str(e):
+                await update.callback_query.answer("Статус авторизации не изменился")
+            else:
+                logger.error(f"Error editing message: {e}")
+    else:
+        await update.message.reply_text(message_text, reply_markup=keyboard)
+    
+    logger.info(f"User {user.id} sent auth link")
 
 
 async def handle_about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

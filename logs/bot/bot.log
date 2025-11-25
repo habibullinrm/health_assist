@@ -1,0 +1,386 @@
+2025-11-24 11:04:20,754 - root - INFO - main.py:370 - Starting Health Assist T&L CU...
+2025-11-24 11:04:20,767 - root - INFO - main.py:381 - Bot is running...
+2025-11-24 11:04:21,328 - telegram.ext.Application - INFO - _application.py:620 - Application started
+2025-11-24 11:04:54,402 - telegram.ext.Application - ERROR - _application.py:1801 - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_application.py", line 1234, in process_update
+    await coroutine
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_basehandler.py", line 157, in handle_update
+    return await self.callback(update, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main.py", line 335, in handle_message
+    await handle_auth(update, context)
+  File "/app/main.py", line 188, in handle_auth
+    await update.message.reply_text(message_text, reply_markup=keyboard)
+  File "/usr/local/lib/python3.11/site-packages/telegram/_message.py", line 1094, in reply_text
+    return await self.get_bot().send_message(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 2624, in send_message
+    return await super().send_message(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 525, in decorator
+    result = await func(self, *args, **kwargs)  # skipcq: PYL-E1102
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 846, in send_message
+    return await self._send_message(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 522, in _send_message
+    result = await super()._send_message(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 703, in _send_message
+    result = await self._post(
+             ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 613, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 340, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 641, in _do_post
+    return await request.post(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 200, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 379, in _request_wrapper
+    raise BadRequest(message)
+telegram.error.BadRequest: Inline keyboard button url 'http://localhost:8000/auth/login?telegram_id=178455374' is invalid: wrong http url
+2025-11-24 11:07:09,847 - root - INFO - main.py:370 - Starting Health Assist T&L CU...
+2025-11-24 11:07:09,860 - root - INFO - main.py:381 - Bot is running...
+2025-11-24 11:07:10,694 - telegram.ext.Application - INFO - _application.py:620 - Application started
+2025-11-24 11:07:17,772 - root - INFO - main.py:190 - User 178455374 sent auth link
+2025-11-24 11:08:15,717 - root - INFO - main.py:190 - User 178455374 sent auth link
+2025-11-24 11:14:11,002 - root - INFO - main.py:334 - Starting Health Assist T&L CU...
+2025-11-24 11:14:11,016 - root - INFO - main.py:345 - Bot is running...
+2025-11-24 11:14:11,893 - telegram.ext.Application - INFO - _application.py:620 - Application started
+2025-11-24 11:14:23,576 - root - INFO - main.py:334 - Starting Health Assist T&L CU...
+2025-11-24 11:14:23,589 - root - INFO - main.py:345 - Bot is running...
+2025-11-24 11:14:24,257 - telegram.ext.Application - INFO - _application.py:620 - Application started
+2025-11-24 11:14:52,215 - root - INFO - main.py:154 - User 178455374 sent auth link
+2025-11-24 11:14:56,100 - telegram.ext.Application - ERROR - _application.py:1801 - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_application.py", line 1234, in process_update
+    await coroutine
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_basehandler.py", line 157, in handle_update
+    return await self.callback(update, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main.py", line 288, in handle_callback
+    await handler(update, context)
+  File "/app/main.py", line 150, in handle_auth
+    await update.callback_query.edit_message_text(message_text, reply_markup=keyboard)
+  File "/usr/local/lib/python3.11/site-packages/telegram/_callbackquery.py", line 241, in edit_message_text
+    return await self.message.edit_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_message.py", line 2536, in edit_text
+    return await self.get_bot().edit_message_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 1473, in edit_message_text
+    return await super().edit_message_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 525, in decorator
+    result = await func(self, *args, **kwargs)  # skipcq: PYL-E1102
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 3288, in edit_message_text
+    return await self._send_message(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 522, in _send_message
+    result = await super()._send_message(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 703, in _send_message
+    result = await self._post(
+             ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 613, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 340, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 641, in _do_post
+    return await request.post(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 200, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 379, in _request_wrapper
+    raise BadRequest(message)
+telegram.error.BadRequest: Message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+2025-11-24 11:15:28,069 - telegram.ext.Application - ERROR - _application.py:1801 - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_application.py", line 1234, in process_update
+    await coroutine
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_basehandler.py", line 157, in handle_update
+    return await self.callback(update, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main.py", line 288, in handle_callback
+    await handler(update, context)
+  File "/app/main.py", line 150, in handle_auth
+    await update.callback_query.edit_message_text(message_text, reply_markup=keyboard)
+  File "/usr/local/lib/python3.11/site-packages/telegram/_callbackquery.py", line 241, in edit_message_text
+    return await self.message.edit_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_message.py", line 2536, in edit_text
+    return await self.get_bot().edit_message_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 1473, in edit_message_text
+    return await super().edit_message_text(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 525, in decorator
+    result = await func(self, *args, **kwargs)  # skipcq: PYL-E1102
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 3288, in edit_message_text
+    return await self._send_message(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 522, in _send_message
+    result = await super()._send_message(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 703, in _send_message
+    result = await self._post(
+             ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 613, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 340, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 641, in _do_post
+    return await request.post(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 200, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 379, in _request_wrapper
+    raise BadRequest(message)
+telegram.error.BadRequest: Message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+2025-11-24 11:18:53,730 - root - INFO - main.py:341 - Starting Health Assist T&L CU...
+2025-11-24 11:18:53,744 - root - INFO - main.py:352 - Bot is running...
+2025-11-24 11:18:54,389 - telegram.ext.Application - INFO - _application.py:620 - Application started
+2025-11-24 11:23:50,208 - root - INFO - main.py:161 - User 178455374 sent auth link
+2025-11-24 11:23:59,332 - root - INFO - main.py:161 - User 178455374 sent auth link
+2025-11-24 11:24:20,309 - root - INFO - main.py:161 - User 178455374 sent auth link
+2025-11-24 11:24:37,517 - root - INFO - main.py:161 - User 178455374 sent auth link
+2025-11-24 11:24:38,330 - root - INFO - main.py:175 - User 178455374 requested about info
+2025-11-25 05:49:37,326 - telegram.ext.Updater - ERROR - _updater.py:701 - Error while getting Updates: httpx.ConnectError: [Errno -3] Temporary failure in name resolution
+2025-11-25 05:49:37,329 - telegram.ext.Application - ERROR - _application.py:1801 - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 66, in map_httpcore_exceptions
+    yield
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 366, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 101, in handle_async_request
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [Errno -3] Temporary failure in name resolution
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_httpxrequest.py", line 268, in do_request
+    res = await self._client.request(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1530, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1617, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1645, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1682, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1719, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 365, in handle_async_request
+    with map_httpcore_exceptions():
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 83, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [Errno -3] Temporary failure in name resolution
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_updater.py", line 688, in _network_loop_retry
+    if not await action_cb():
+           ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_updater.py", line 384, in polling_action_cb
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_updater.py", line 373, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 558, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 525, in decorator
+    result = await func(self, *args, **kwargs)  # skipcq: PYL-E1102
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 3584, in get_updates
+    await self._post(
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 613, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 340, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 641, in _do_post
+    return await request.post(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 200, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 340, in _request_wrapper
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 330, in _request_wrapper
+    code, payload = await self.do_request(
+                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_httpxrequest.py", line 292, in do_request
+    raise NetworkError(f"httpx.{err.__class__.__name__}: {err}") from err
+telegram.error.NetworkError: httpx.ConnectError: [Errno -3] Temporary failure in name resolution
+2025-11-25 05:49:38,333 - telegram.ext.Updater - ERROR - _updater.py:701 - Error while getting Updates: httpx.ConnectError: [Errno -3] Temporary failure in name resolution
+2025-11-25 05:49:38,333 - telegram.ext.Application - ERROR - _application.py:1801 - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 66, in map_httpcore_exceptions
+    yield
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 366, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 101, in handle_async_request
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [Errno -3] Temporary failure in name resolution
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_httpxrequest.py", line 268, in do_request
+    res = await self._client.request(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1530, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1617, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1645, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1682, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1719, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 365, in handle_async_request
+    with map_httpcore_exceptions():
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 83, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [Errno -3] Temporary failure in name resolution
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_updater.py", line 688, in _network_loop_retry
+    if not await action_cb():
+           ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_updater.py", line 384, in polling_action_cb
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_updater.py", line 373, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 558, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 525, in decorator
+    result = await func(self, *args, **kwargs)  # skipcq: PYL-E1102
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 3584, in get_updates
+    await self._post(
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 613, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 340, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/_bot.py", line 641, in _do_post
+    return await request.post(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 200, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 340, in _request_wrapper
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 330, in _request_wrapper
+    code, payload = await self.do_request(
+                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/telegram/request/_httpxrequest.py", line 292, in do_request
+    raise NetworkError(f"httpx.{err.__class__.__name__}: {err}") from err
+telegram.error.NetworkError: httpx.ConnectError: [Errno -3] Temporary failure in name resolution
+2025-11-25 06:08:18,524 - root - INFO - main.py:337 - Starting Health Assist T&L CU...
+2025-11-25 06:08:18,540 - root - INFO - main.py:348 - Bot is running...
+2025-11-25 06:08:19,544 - telegram.ext.Application - INFO - _application.py:620 - Application started
+2025-11-25 07:30:55,235 - root - INFO - main.py:337 - Starting Health Assist T&L CU...
+2025-11-25 07:30:55,250 - root - INFO - main.py:348 - Bot is running...
+2025-11-25 07:30:55,981 - telegram.ext.Application - INFO - _application.py:620 - Application started
+2025-11-25 07:35:09,519 - root - INFO - main.py:157 - User 178455374 sent auth link
+2025-11-25 07:39:16,853 - root - INFO - main.py:157 - User 178455374 sent auth link
+2025-11-25 07:39:47,791 - root - INFO - main.py:127 - User 178455374 authorized via backend check
+2025-11-25 08:07:16,217 - root - INFO - main.py:361 - Starting Health Assist T&L CU...
+2025-11-25 08:07:16,232 - root - INFO - main.py:372 - Bot is running...
+2025-11-25 08:07:17,178 - telegram.ext.Application - INFO - _application.py:620 - Application started
+2025-11-25 08:09:30,907 - root - INFO - main.py:103 - User 178455374 newly authorized
+2025-11-25 08:09:39,710 - root - INFO - main.py:196 - User 178455374 requested about info
+2025-11-25 08:11:28,562 - root - INFO - main.py:125 - User 178455374 (Рустам) started the bot
+2025-11-25 08:14:30,967 - root - INFO - main.py:367 - Starting Health Assist T&L CU...
+2025-11-25 08:14:30,984 - root - INFO - main.py:378 - Bot is running...
+2025-11-25 08:14:31,858 - telegram.ext.Application - INFO - _application.py:620 - Application started
+2025-11-25 08:14:52,050 - root - INFO - main.py:108 - User 178455374 not authorized, status code: 404
+2025-11-25 08:14:52,645 - root - INFO - main.py:131 - User 178455374 (Рустам) started the bot
+2025-11-25 08:14:57,559 - root - INFO - main.py:188 - User 178455374 sent auth link
+2025-11-25 08:22:28,657 - root - INFO - main.py:108 - User 7290756797 not authorized, status code: 404
+2025-11-25 08:22:29,566 - root - INFO - main.py:131 - User 7290756797 (ИП Злоказова Е.А.) started the bot
+2025-11-25 08:22:35,807 - root - INFO - main.py:188 - User 7290756797 sent auth link
+2025-11-25 08:27:44,539 - root - INFO - main.py:103 - User 178455374 newly authorized
