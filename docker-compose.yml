@@ -108,10 +108,17 @@ services:
 
   cloudpub:
     image: cloudpub/cloudpub:latest
+    container_name: health_assist_cloudpub
     restart: unless-stopped
     environment:
       KEY: ${CLOUDPUB_KEY}
-    command: api:8000
+    volumes:
+      - cloudpub_config:/root/.config/cloudpub
+      - ./cloudpub_init.sh:/cloudpub_init.sh:ro
+    entrypoint: /cloudpub_init.sh
+    command: publish http api:8000
+    depends_on:
+      - api
     networks:
       - health_assist_network
 
@@ -125,3 +132,5 @@ volumes:
     name: health_assist_postgres_data
   pgadmin_data:
     name: health_assist_pgadmin_data
+  cloudpub_config:
+    name: health_assist_cloudpub_config
