@@ -111,11 +111,9 @@ services:
     container_name: health_assist_cloudpub
     restart: unless-stopped
     environment:
-      KEY: ${CLOUDPUB_KEY}
+      TOKEN: ${CLOUDPUB_TOKEN}
     volumes:
-      - cloudpub_config:/root/.config/cloudpub
-      - ./cloudpub_init.sh:/cloudpub_init.sh:ro
-    entrypoint: /cloudpub_init.sh
+      - cloudpub_config:/home/cloudpub
     command: publish http api:8000
     depends_on:
       - api
