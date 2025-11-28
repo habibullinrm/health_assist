@@ -28,6 +28,7 @@ class Plan(Base):
         server_default=func.now()
     )
     share_with_doctor = Column(Boolean, nullable=False, server_default="false")
+    original_file_path = Column(String(500), nullable=True, comment="Путь к оригинальному PDF файлу")
     doctor_id = Column(Integer, ForeignKey("doctors.id", ondelete="RESTRICT"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 

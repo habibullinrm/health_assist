@@ -5,9 +5,19 @@ Telegram бот для Health Assist с кнопочным интерфейсо�
 import os
 import logging
 import httpx
+from datetime import datetime
+from pathlib import Path
 from dotenv import load_dotenv
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    ConversationHandler,
+    filters
+)
 
 # Загружаем переменные окружения
 load_dotenv()
@@ -39,6 +49,10 @@ BTN_NOTIFICATIONS = "🔔 Уведомления"
 BTN_SHOW_WITH_RECOMMENDATIONS = "📋 Показать с рекомендациями"
 BTN_DOWNLOAD_PDF = "📄 Скачать PDF"
 BTN_BACK = "◀️ Назад"
+BTN_CANCEL = "❌ Отмена"
+
+# Состояния для ConversationHandler загрузки плана
+UPLOAD_FILE = 0
 
 
 def get_unauthorized_keyboard():
@@ -85,7 +99,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     start_param = context.args[0] if context.args else None
 
     # Проверяем авторизацию через API при каждом старте
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=5.0) as client:
         try:
             response = await client.get(f"{API_URL}/api/v1/auth/check/{user.id}")
             if response.status_code == 200:
@@ -114,14 +128,40 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 await update.message.reply_text(welcome_message, reply_markup=get_main_keyboard())
                 logger.info(f"User {user.id} ({user.first_name}) started the bot (authorized)")
                 return
-            else:
-                # Пользователь не найден или не авторизован
+            elif response.status_code == 404:
+                # Пользователь не найден - точно не авторизован
                 context.user_data['authorized'] = False
-                logger.info(f"User {user.id} not authorized, status code: {response.status_code}")
-        except Exception as e:
-            # При ошибке также сбрасываем флаг авторизации
+                logger.info(f"User {user.id} not found in database")
+            else:
+                # Другие ошибки сервера (500, 502, и т.д.)
+                context.user_data['authorized'] = False
+                logger.warning(f"User {user.id} auth check failed, status code: {response.status_code}")
+        except httpx.TimeoutException:
+            # Таймаут - сервер не отвечает
             context.user_data['authorized'] = False
-            logger.error(f"Error checking auth on start: {e}")
+            logger.error(f"Timeout checking auth for user {user.id}")
+
+            # Показываем сообщение об ошибке сервера
+            error_message = (
+                f"Здравствуйте, {user.first_name}! 👋\n\n"
+                "⚠️ Сервер временно недоступен. Пожалуйста, попробуйте позже.\n\n"
+                "Если проблема повторяется, обратитесь в поддержку."
+            )
+            await update.message.reply_text(error_message, reply_markup=get_unauthorized_keyboard())
+            return
+        except Exception as e:
+            # Другие непредвиденные ошибки
+            context.user_data['authorized'] = False
+            logger.error(f"Error checking auth on start for user {user.id}: {e}")
+
+            # Показываем сообщение об ошибке
+            error_message = (
+                f"Здравствуйте, {user.first_name}! 👋\n\n"
+                "⚠️ Произошла ошибка при проверке авторизации. Пожалуйста, попробуйте позже.\n\n"
+                "Если проблема повторяется, обратитесь в поддержку."
+            )
+            await update.message.reply_text(error_message, reply_markup=get_unauthorized_keyboard())
+            return
 
     # Пользователь не авторизован
     welcome_message = (
@@ -136,16 +176,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def handle_auth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработчик авторизации"""
     user = update.effective_user
-    
+
     # Check auth status in backend
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=5.0) as client:
         try:
             response = await client.get(f"{API_URL}/api/v1/auth/check/{user.id}")
             if response.status_code == 200:
                 data = response.json()
                 # User is authorized
                 context.user_data['authorized'] = True
-                
+
                 auth_message = (
                     f"✅ Вы успешно авторизованы!\n\n"
                     f"Пользователь: {data.get('user')}\n"
@@ -159,8 +199,22 @@ async def handle_auth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     await update.message.reply_text(auth_message, reply_markup=keyboard)
                 logger.info(f"User {user.id} authorized via backend check")
                 return
+        except httpx.TimeoutException:
+            logger.error(f"Timeout checking auth for user {user.id}")
+            error_message = "⚠️ Сервер временно недоступен. Пожалуйста, попробуйте позже."
+            if update.callback_query:
+                await update.callback_query.answer(error_message, show_alert=True)
+            else:
+                await update.message.reply_text(error_message)
+            return
         except Exception as e:
             logger.error(f"Error checking auth: {e}")
+            error_message = "⚠️ Произошла ошибка при проверке авторизации. Пожалуйста, попробуйте позже."
+            if update.callback_query:
+                await update.callback_query.answer(error_message, show_alert=True)
+            else:
+                await update.message.reply_text(error_message)
+            return
 
     # Not authorized or error -> Send link
     auth_url = f"{WEB_URL}/api/v1/auth/login?telegram_id={user.id}"
@@ -203,15 +257,123 @@ async def handle_about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     logger.info(f"User {update.effective_user.id} requested about info")
 
 
-async def handle_add_plan(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Обработчик 'Добавить план лечения'"""
-    message = (
-        "➕ Добавление плана лечения\n\n"
-        "Здесь вы сможете добавить новый план лечения, назначенный вашим врачом.\n\n"
-        "🚧 Функция находится в разработке..."
+# ===== Обработчики для загрузки плана лечения =====
+
+async def plan_upload_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Начало диалога загрузки плана лечения"""
+    cancel_keyboard = ReplyKeyboardMarkup(
+        [[KeyboardButton(BTN_CANCEL)]],
+        resize_keyboard=True
     )
-    await update.message.reply_text(message)
-    logger.info(f"User {update.effective_user.id} requested add plan")
+
+    message = (
+        "📄 Добавление плана лечения\n\n"
+        "Пожалуйста, загрузите PDF файл с планом лечения, назначенным вашим врачом.\n\n"
+        "Для отмены нажмите 'Отмена'"
+    )
+    await update.message.reply_text(message, reply_markup=cancel_keyboard)
+    logger.info(f"User {update.effective_user.id} started plan upload")
+    return UPLOAD_FILE
+
+
+async def plan_upload_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Обработка загрузки файла и отправка в API"""
+    document = update.message.document
+
+    if not document:
+        await update.message.reply_text(
+            "❌ Пожалуйста, отправьте файл в формате PDF.\n"
+            "Для отмены нажмите 'Отмена'"
+        )
+        return UPLOAD_FILE
+
+    # Проверяем, что это PDF файл
+    if document.mime_type != 'application/pdf':
+        await update.message.reply_text(
+            "❌ Файл должен быть в формате PDF.\n"
+            "Пожалуйста, загрузите правильный файл или нажмите 'Отмена'"
+        )
+        return UPLOAD_FILE
+
+    # Показываем сообщение о загрузке
+    await update.message.reply_text(
+        f"⏳ Загружаю план лечения '{document.file_name}'...",
+        reply_markup=ReplyKeyboardRemove()
+    )
+
+    user = update.effective_user
+
+    try:
+        # Получаем файл из Telegram
+        file = await context.bot.get_file(document.file_id)
+        file_bytes = await file.download_as_bytearray()
+
+        # Подготавливаем файл для отправки в API
+        files = {
+            'file': (document.file_name, bytes(file_bytes), 'application/pdf')
+        }
+
+        # Заголовок для авторизации
+        headers = {
+            'X-Telegram-ID': str(user.id)
+        }
+
+        # Отправляем в API
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                f"{API_URL}/api/v1/plans/load_plan_file",
+                files=files,
+                headers=headers
+            )
+
+            if response.status_code == 201:
+                result = response.json()
+                success_message = (
+                    "✅ План лечения успешно загружен!\n\n"
+                    f"📋 Название: {result.get('title')}\n"
+                    f"🆔 ID плана: {result.get('id')}\n\n"
+                    "Вы можете посмотреть его в разделе 'Мое лечение'"
+                )
+                await update.message.reply_text(success_message, reply_markup=get_main_keyboard())
+                logger.info(f"User {user.id} successfully uploaded plan, ID: {result.get('id')}")
+            else:
+                error_detail = response.json().get('detail', 'Unknown error')
+                await update.message.reply_text(
+                    f"❌ Ошибка при загрузке плана:\n{error_detail}\n\n"
+                    "Пожалуйста, попробуйте позже.",
+                    reply_markup=get_main_keyboard()
+                )
+                logger.error(f"API error uploading plan for user {user.id}: {response.status_code} - {error_detail}")
+
+    except httpx.TimeoutException:
+        await update.message.reply_text(
+            "❌ Время ожидания истекло. Сервер не отвечает.\n"
+            "Пожалуйста, попробуйте позже.",
+            reply_markup=get_main_keyboard()
+        )
+        logger.error(f"Timeout uploading plan for user {user.id}")
+
+    except Exception as e:
+        await update.message.reply_text(
+            f"❌ Произошла ошибка при загрузке плана:\n{str(e)}\n\n"
+            "Пожалуйста, попробуйте позже.",
+            reply_markup=get_main_keyboard()
+        )
+        logger.error(f"Error uploading plan for user {user.id}: {e}")
+
+    return ConversationHandler.END
+
+
+async def plan_upload_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Отмена загрузки плана лечения"""
+    await update.message.reply_text(
+        "❌ Загрузка плана лечения отменена.",
+        reply_markup=get_main_keyboard()
+    )
+    logger.info(f"User {update.effective_user.id} cancelled plan upload")
+    return ConversationHandler.END
+
+# ===== Конец обработчиков для загрузки плана ====="
 
 
 async def handle_my_treatment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -333,11 +495,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await handle_auth(update, context)
     elif text == BTN_ABOUT:
         await handle_about(update, context)
-    elif text == BTN_ADD_PLAN:
-        if not is_authorized(context):
-            await update.message.reply_text("⚠️ Сначала необходимо авторизоваться!")
-            return
-        await handle_add_plan(update, context)
     elif text == BTN_MY_TREATMENT:
         if not is_authorized(context):
             await update.message.reply_text("⚠️ Сначала необходимо авторизоваться!")
@@ -370,8 +527,21 @@ def main() -> None:
     # Создаем приложение бота
     application = Application.builder().token(TG_TOKEN).build()
 
+    # ConversationHandler для загрузки плана лечения
+    plan_upload_conv = ConversationHandler(
+        entry_points=[MessageHandler(filters.Regex(f"^{BTN_ADD_PLAN}$"), plan_upload_start)],
+        states={
+            UPLOAD_FILE: [
+                MessageHandler(filters.Document.PDF, plan_upload_file),
+                MessageHandler(filters.Regex(f"^{BTN_CANCEL}$"), plan_upload_cancel)
+            ],
+        },
+        fallbacks=[MessageHandler(filters.Regex(f"^{BTN_CANCEL}$"), plan_upload_cancel)],
+    )
+
     # Регистрируем обработчики
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(plan_upload_conv)  # ConversationHandler для загрузки плана
     application.add_handler(CallbackQueryHandler(handle_callback))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 

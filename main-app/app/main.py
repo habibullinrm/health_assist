@@ -6,7 +6,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-# from app.api.v1 import users, plans  # Импортируем роуты когда создадим
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -59,9 +58,8 @@ async def health_check():
 
 
 # Подключение роутов API v1
-from app.api.v1 import auth, users
+from app.api.v1 import auth, users, plans
 
 app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
-
-# app.include_router(plans.router, prefix="/api/v1", tags=["plans"])
+app.include_router(plans.router, prefix="/api/v1/plans", tags=["plans"])

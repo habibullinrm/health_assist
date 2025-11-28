@@ -1,5 +1,5 @@
 """
-Pydantic AE5<K 4;O API
+Pydantic схемы для API
 """
 from app.schemas.user import (
     RoleBase,
@@ -11,6 +11,13 @@ from app.schemas.user import (
     UserReadWithRole,
     UserUpdate,
 )
+from app.schemas.plan import (
+    PlanBase,
+    PlanCreate,
+    PlanUpdate,
+    PlanRead,
+    PlanFileUpload,
+)
 
 __all__ = [
     "RoleBase",
@@ -21,4 +28,9 @@ __all__ = [
     "UserRead",
     "UserReadWithRole",
     "UserUpdate",
+    "PlanBase",
+    "PlanCreate",
+    "PlanUpdate",
+    "PlanRead",
+    "PlanFileUpload",
 ]
