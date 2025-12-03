@@ -1,0 +1,266 @@
+# Промпт для извлечения структурированной информации из плана лечения
+name: "extract_treatment_plan"
+description: "Извлечение врачей, симптомов, направлений и лекарств из текста плана лечения"
+version: "1.0"
+
+# Системный промпт
+system_prompt: |
+  Ты — медицинский ассистент, специализирующийся на анализе планов лечения.
+  Твоя задача — извлекать структурированную информацию из текстов медицинских документов.
+
+  ВАЖНЫЕ ПРАВИЛА:
+  1. Извлекай только ту информацию, которая явно присутствует в тексте
+  2. Не придумывай и не домысливай данные
+  3. Если какая-то информация отсутствует, оставляй поле пустым или null
+  4. Все имена врачей, названия лекарств и обследований должны быть извлечены точно как в тексте
+  5. Дозировки и частоту приема лекарств указывай дословно из текста
+  6. Если информация неполная или неоднозначная, укажи это в поле "уверенность"
+
+  ФОРМАТ ОТВЕТА:
+  Возвращай только валидный JSON в соответствии с указанной схемой.
+
+# Шаблон пользовательского промпта
+user_prompt_template: |
+  Проанализируй следующий текст плана лечения и извлеки из него структурированную информацию:
+
+  ТЕКСТ ПЛАНА ЛЕЧЕНИЯ:
+  {treatment_plan_text}
+
+  Извлеки следующую информацию:
+  1. Информация о враче (специализация, ФИО)
+  2. Симптомы пациента
+  3. Направления к врачам-специалистам
+  4. Направления на обследования и анализы
+  5. Назначенные лекарства с подробной информацией
+
+  Верни результат в формате JSON согласно схеме.
+
+# JSON Schema для ответа
+response_schema:
+  type: "object"
+  required: ["doctor", "symptoms", "referrals", "examinations", "medications"]
+  properties:
+    doctor:
+      type: "object"
+      description: "Информация о враче, составившем план лечения"
+      properties:
+        full_name:
+          type: "string"
+          description: "ФИО врача (Фамилия И.О. или полностью)"
+          example: "Иванов И.И."
+        specialization:
+          type: "string"
+          description: "Специализация врача"
+          example: "Терапевт"
+        medical_organization:
+          type: "string"
+          description: "Медицинское учреждение"
+          nullable: true
+
+    symptoms:
+      type: "array"
+      description: "Список симптомов пациента"
+      items:
+        type: "object"
+        properties:
+          symptom:
+            type: "string"
+            description: "Описание симптома"
+            example: "повышенная температура"
+          severity:
+            type: "string"
+            description: "Выраженность симптома"
+            enum: ["легкая", "умеренная", "выраженная", "неизвестна"]
+            nullable: true
+
+    referrals:
+      type: "array"
+      description: "Направления к врачам-специалистам"
+      items:
+        type: "object"
+        properties:
+          specialization:
+            type: "string"
+            description: "Специализация врача"
+            example: "Кардиолог"
+          purpose:
+            type: "string"
+            description: "Цель направления"
+            nullable: true
+          urgency:
+            type: "string"
+            description: "Срочность приема"
+            enum: ["плановый", "срочный", "неотложный", "неизвестна"]
+            nullable: true
+
+    examinations:
+      type: "array"
+      description: "Направления на обследования и анализы"
+      items:
+        type: "object"
+        properties:
+          name:
+            type: "string"
+            description: "Название обследования или анализа"
+            example: "Общий анализ крови"
+          type:
+            type: "string"
+            description: "Тип обследования"
+            enum: ["анализ", "УЗИ", "рентген", "МРТ", "КТ", "ЭКГ", "другое"]
+          preparation:
+            type: "string"
+            description: "Подготовка к обследованию"
+            nullable: true
+          deadline:
+            type: "string"
+            description: "Срок выполнения"
+            nullable: true
+
+    medications:
+      type: "array"
+      description: "Список назначенных лекарств"
+      items:
+        type: "object"
+        required: ["name"]
+        properties:
+          name:
+            type: "string"
+            description: "Название лекарственного препарата"
+            example: "Амоксициллин"
+          dosage:
+            type: "string"
+            description: "Дозировка препарата"
+            example: "500 мг"
+          frequency:
+            type: "string"
+            description: "Частота приема (сколько раз в день)"
+            example: "3 раза в день"
+          timing:
+            type: "string"
+            description: "Время приема относительно еды"
+            enum: ["до еды", "после еды", "во время еды", "независимо от еды", "не указано"]
+            nullable: true
+          duration:
+            type: "string"
+            description: "Длительность курса приема"
+            example: "7 дней"
+          form:
+            type: "string"
+            description: "Форма выпуска"
+            example: "таблетки"
+            nullable: true
+          special_instructions:
+            type: "string"
+            description: "Особые указания по приему"
+            nullable: true
+
+    additional_recommendations:
+      type: "array"
+      description: "Дополнительные рекомендации"
+      items:
+        type: "string"
+      nullable: true
+
+    metadata:
+      type: "object"
+      description: "Метаданные извлечения"
+      properties:
+        confidence:
+          type: "string"
+          description: "Уровень уверенности в извлеченных данных"
+          enum: ["высокая", "средняя", "низкая"]
+        notes:
+          type: "string"
+          description: "Примечания об извлечении данных"
+          nullable: true
+
+# Примеры для few-shot learning
+examples:
+  - input: |
+      ПЛАН ЛЕЧЕНИЯ
+
+      Врач: Петров П.П., терапевт
+      Поликлиника №5
+
+      Жалобы: повышенная температура 38.5°C, головная боль, кашель
+
+      Диагноз: ОРВИ
+
+      Назначения:
+      1. Парацетамол 500мг по 1 таблетке 3 раза в день после еды, 5 дней
+      2. Амброксол сироп 15мл 2 раза в день после еды, 7 дней
+
+      Направления:
+      - Общий анализ крови (сдать натощак в течение 3 дней)
+      - Рентген органов грудной клетки
+
+      Рекомендации:
+      - Обильное питье
+      - Постельный режим
+      - Контрольный осмотр через 7 дней
+
+    output:
+      doctor:
+        full_name: "Петров П.П."
+        specialization: "Терапевт"
+        medical_organization: "Поликлиника №5"
+
+      symptoms:
+        - symptom: "повышенная температура 38.5°C"
+          severity: "умеренная"
+        - symptom: "головная боль"
+          severity: "неизвестна"
+        - symptom: "кашель"
+          severity: "неизвестна"
+
+      referrals: []
+
+      examinations:
+        - name: "Общий анализ крови"
+          type: "анализ"
+          preparation: "сдать натощак"
+          deadline: "в течение 3 дней"
+        - name: "Рентген органов грудной клетки"
+          type: "рентген"
+          preparation: null
+          deadline: null
+
+      medications:
+        - name: "Парацетамол"
+          dosage: "500 мг"
+          frequency: "3 раза в день"
+          timing: "после еды"
+          duration: "5 дней"
+          form: "таблетки"
+          special_instructions: null
+        - name: "Амброксол"
+          dosage: "15 мл"
+          frequency: "2 раза в день"
+          timing: "после еды"
+          duration: "7 дней"
+          form: "сироп"
+          special_instructions: null
+
+      additional_recommendations:
+        - "Обильное питье"
+        - "Постельный режим"
+        - "Контрольный осмотр через 7 дней"
+
+      metadata:
+        confidence: "высокая"
+        notes: null
+
+# Параметры для LLM
+llm_parameters:
+  temperature: 0.1  # Низкая температура для более детерминированного вывода
+  max_tokens: 2000
+  top_p: 0.95
+  presence_penalty: 0
+  frequency_penalty: 0
+
+# Постобработка
+post_processing:
+  - "validate_json_schema"
+  - "normalize_medication_names"
+  - "format_dosages"
+  - "deduplicate_entries"

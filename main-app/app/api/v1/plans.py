@@ -2,6 +2,7 @@
 API endpoints для планов лечения
 """
 import os
+import logging
 from typing import List
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -12,6 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import crud, schemas
 from app.api.deps import get_db, get_current_user
 from app.models.user import User
+from app.services.pdf_processor import process_treatment_plan_pdf
+from app.services.gigachat_service import get_gigachat_service
+from app.prompts import load_treatment_plan_prompt
+
+# Настройка логирования
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -60,11 +67,113 @@ async def load_plan_file(
             detail=f"Error saving file: {str(e)}"
         )
 
+    # Обрабатываем PDF-файл и извлекаем текст
+    logger.info(f"Начало обработки PDF-файла: {file_path}")
+    pdf_result = process_treatment_plan_pdf(str(file_path))
+
+    logger.info(f"Статус обработки PDF: {pdf_result['status']}")
+    logger.info(f"Сообщение: {pdf_result['message']}")
+
+    if pdf_result['status'] == 'success':
+        logger.info(f"Тип PDF: {pdf_result['data'].get('pdf_type')}")
+        logger.info(f"Количество символов в тексте: {pdf_result['data'].get('text_length')}")
+        logger.info(f"Метаданные: {pdf_result['data'].get('metadata')}")
+        logger.info(f"Извлеченный текст:\n{pdf_result['data'].get('text')}")
+
+        # Извлекаем структурированную информацию с помощью GigaChat
+        extracted_text = pdf_result['data'].get('text')
+
+        try:
+            logger.info("=" * 80)
+            logger.info("Начало извлечения структурированной информации с помощью GigaChat")
+            logger.info("=" * 80)
+
+            # Загружаем промпт
+            system_prompt, user_prompt, llm_params = load_treatment_plan_prompt(extracted_text)
+
+            logger.info(f"Системный промпт загружен (длина: {len(system_prompt)} символов)")
+            logger.info(f"Пользовательский промпт сформирован (длина: {len(user_prompt)} символов)")
+            logger.info(f"Параметры LLM: {llm_params}")
+
+            # Инициализируем GigaChat и отправляем запрос
+            with get_gigachat_service() as giga:
+                logger.info("GigaChat сервис инициализирован")
+
+                # Формируем сообщения
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
+
+                logger.info("Отправка запроса к GigaChat API...")
+
+                # Отправляем запрос
+                gigachat_response = giga.chat(
+                    messages=messages,
+                    temperature=llm_params.get('temperature', 0.1),
+                    max_tokens=llm_params.get('max_tokens', 2000),
+                    top_p=llm_params.get('top_p', 0.95)
+                )
+
+                logger.info("=" * 80)
+                logger.info("ОТВЕТ ОТ GIGACHAT:")
+                logger.info("=" * 80)
+                logger.info(gigachat_response)
+                logger.info("=" * 80)
+                logger.info(f"Длина ответа: {len(gigachat_response)} символов")
+
+                # Попытка распарсить JSON
+                import json
+                try:
+                    # Очищаем ответ от markdown если есть
+                    cleaned_response = gigachat_response.strip()
+                    if cleaned_response.startswith("```json"):
+                        cleaned_response = cleaned_response[7:]
+                    if cleaned_response.startswith("```"):
+                        cleaned_response = cleaned_response[3:]
+                    if cleaned_response.endswith("```"):
+                        cleaned_response = cleaned_response[:-3]
+                    cleaned_response = cleaned_response.strip()
+
+                    parsed_response = json.loads(cleaned_response)
+                    logger.info("=" * 80)
+                    logger.info("СТРУКТУРИРОВАННЫЕ ДАННЫЕ:")
+                    logger.info("=" * 80)
+                    logger.info(json.dumps(parsed_response, indent=2, ensure_ascii=False))
+                    logger.info("=" * 80)
+
+                    # Логируем ключевые данные
+                    if 'doctor' in parsed_response:
+                        logger.info(f"Врач: {parsed_response['doctor']}")
+                    if 'symptoms' in parsed_response:
+                        logger.info(f"Симптомов: {len(parsed_response['symptoms'])}")
+                    if 'medications' in parsed_response:
+                        logger.info(f"Лекарств назначено: {len(parsed_response['medications'])}")
+                    if 'examinations' in parsed_response:
+                        logger.info(f"Обследований: {len(parsed_response['examinations'])}")
+                    if 'referrals' in parsed_response:
+                        logger.info(f"Направлений к врачам: {len(parsed_response['referrals'])}")
+
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Не удалось распарсить ответ как JSON: {e}")
+                    logger.warning("Ответ будет обработан как текст")
+
+        except Exception as e:
+            logger.error(f"Ошибка при работе с GigaChat: {e}", exc_info=True)
+            logger.warning("Продолжаем без извлечения структурированной информации")
+
+    elif pdf_result['status'] == 'error':
+        logger.warning(f"Ошибка обработки PDF: {pdf_result['message']}")
+        if 'data' in pdf_result:
+            logger.info(f"Дополнительные данные: {pdf_result['data']}")
+
     # Создаем запись плана в базе данных с автоматически сгенерированными данными
     today = datetime.now().date()
 
     # Используем имя файла как название плана (убираем расширение)
     title = file.filename.replace('.pdf', '') if file.filename else f"План лечения от {today}"
+
+
 
     plan_data = schemas.PlanCreate(
         title=title,
@@ -78,14 +187,15 @@ async def load_plan_file(
         user_id=current_user.id
     )
 
-    plan = await crud.plan.create(db, obj_in=plan_data)
-    await db.commit()
+    # временно закомментил, надо бд поправить
+    # plan = await crud.plan.create(db, obj_in=plan_data)
+    # await db.commit()
 
     return schemas.PlanFileUpload(
-        id=plan.id,
-        title=plan.title,
+        id=1, #plan.id,
+        title=title, #plan.title,
         file_path=str(file_path),
-        message="Plan file uploaded successfully"
+        message=str(pdf_result['data'])
     )
 
 

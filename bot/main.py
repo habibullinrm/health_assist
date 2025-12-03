@@ -87,8 +87,45 @@ def get_treatment_submenu():
 
 
 def is_authorized(context: ContextTypes.DEFAULT_TYPE) -> bool:
-    """Проверка авторизации пользователя"""
+    """Проверка авторизации пользователя (только из кэша)"""
     return context.user_data.get('authorized', False)
+
+
+async def check_authorization(user_id: int, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """
+    Проверка авторизации пользователя через API и обновление кэша
+
+    Args:
+        user_id: ID пользователя Telegram
+        context: Контекст бота
+
+    Returns:
+        True если авторизован, False если нет
+    """
+    # Сначала проверяем кэш
+    if context.user_data.get('authorized', False):
+        # Если в кэше есть авторизация, периодически проверяем API
+        # (можно добавить проверку времени последней проверки)
+        return True
+
+    # Проверяем через API
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        try:
+            response = await client.get(f"{API_URL}/api/v1/auth/check/{user_id}")
+            if response.status_code == 200:
+                # Пользователь авторизован - обновляем кэш
+                context.user_data['authorized'] = True
+                logger.info(f"User {user_id} authorization confirmed via API")
+                return True
+            else:
+                # Пользователь не авторизован
+                context.user_data['authorized'] = False
+                return False
+        except Exception as e:
+            # При ошибке считаем что не авторизован
+            logger.error(f"Error checking authorization for user {user_id}: {e}")
+            context.user_data['authorized'] = False
+            return False
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -261,6 +298,13 @@ async def handle_about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def plan_upload_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Начало диалога загрузки плана лечения"""
+    user = update.effective_user
+
+    # Проверяем авторизацию перед началом загрузки
+    if not await check_authorization(user.id, context):
+        await update.message.reply_text("⚠️ Сначала необходимо авторизоваться!")
+        return ConversationHandler.END
+
     cancel_keyboard = ReplyKeyboardMarkup(
         [[KeyboardButton(BTN_CANCEL)]],
         resize_keyboard=True
@@ -489,6 +533,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработчик текстовых сообщений (нажатий на кнопки)"""
     text = update.message.text
+    user = update.effective_user
 
     # Маршрутизация по тексту кнопки
     if text == BTN_AUTH:
@@ -496,17 +541,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     elif text == BTN_ABOUT:
         await handle_about(update, context)
     elif text == BTN_MY_TREATMENT:
-        if not is_authorized(context):
+        # Проверяем авторизацию через API
+        if not await check_authorization(user.id, context):
             await update.message.reply_text("⚠️ Сначала необходимо авторизоваться!")
             return
         await handle_my_treatment(update, context)
     elif text == BTN_FEEL_BAD:
-        if not is_authorized(context):
+        # Проверяем авторизацию через API
+        if not await check_authorization(user.id, context):
             await update.message.reply_text("⚠️ Сначала необходимо авторизоваться!")
             return
         await handle_feel_bad(update, context)
     elif text == BTN_NOTIFICATIONS:
-        if not is_authorized(context):
+        # Проверяем авторизацию через API
+        if not await check_authorization(user.id, context):
             await update.message.reply_text("⚠️ Сначала необходимо авторизоваться!")
             return
         await handle_notifications(update, context)

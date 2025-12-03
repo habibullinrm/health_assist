@@ -1,6 +1,7 @@
 """
 Настройки приложения
 """
+from typing import Optional
 from pydantic_settings import BaseSettings
 
 
@@ -32,7 +33,7 @@ class Settings(BaseSettings):
     GC_SCOPE: str
     GC_AUTH_KEY: str
     GC_CLIENT_SECRET: str
-    GIGACHAT_BASE_URL: str
+    GIGACHAT_BASE_URL: Optional[str] = None  # Опционально, если не указано - используется реальный API GigaChat
 
     # Yandex OAuth (из main-app/.env)
     YANDEX_CLIENT_ID: str
